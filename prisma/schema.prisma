@@ -1,0 +1,78 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgres"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  image     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  accounts Account[]
+  links    Link[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String // e.g. "oauth", "email", etc.
+  provider          String // e.g. "google", "github", etc.
+  providerAccountId String // e.g. the unique ID from the provider
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String? // e.g. "Bearer"
+  scope             String? // e.g. "read:user repo", "name", etc.
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model Link {
+  id          String   @id @default(cuid())
+  redirectUrl String
+  shortCode   String   @unique
+  url         String
+  description String?
+  userId      String
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user   User    @relation(fields: [userId], references: [id])
+  clicks Click[]
+
+  @@index([userId])
+}
+
+model Click {
+  id        String   @id @default(cuid())
+  linkId    String
+  code      String? // e.g. "company_name", "utm_source", "referral_code", etc.
+  ip        String?
+  country   String?
+  city      String?
+  device    String?
+  os        String?
+  userAgent String?
+  browser   String?
+  referrer  String?
+  createdAt DateTime @default(now())
+  link      Link     @relation(fields: [linkId], references: [id])
+
+  @@index([code])
+  @@index([linkId])
+  @@index([createdAt])
+}
